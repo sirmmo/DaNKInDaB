@@ -7,17 +7,20 @@ import inspect
 from server.models import *
 import importlib
 import os
+import sys
+import subprocess
+
 
 def dispatcher(environ, setup_response):
     print environ
     vh = VirtualHostName.objects.filter(name=environ.get('HTTP_HOST'))
     if len(vh)>0:
         vh = vh[0]
-        cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(vh.virtualhost.base_dir))))
-        if cmd_folder not in sys.path:
+        cmd_subfolder = vh.virtualhost.base_dir
+        if cmd_subfolder not in sys.path:
             sys.path.insert(0, cmd_subfolder)
         m = importlib.import_module(vh.virtualhost.wsgi)
-        return m(environ, setup_reponse)
+        return m.application(environ, setup_response)
     else:
         setup_response('500 ERROR', None)
         return ["ERROR"]

@@ -6,6 +6,9 @@ class Listener(models.Model):
 	secure = models.BooleanField(default=False)
 	keyfile = models.TextField(blank=True, null=True)
 	certfile = models.TextField(blank=True, null=True)
+
+	pid = models.IntegerField(default=0)
+
 	def __str__(self):
 		return "*:" + str(self.port)
 
@@ -14,6 +17,9 @@ class VirtualHost(models.Model):
 	base_dir = models.TextField()
 	wsgi = models.TextField()
 
+	pid = models.IntegerField(default=0)
+	
+	
 	def __str__(self):
 		return self.base_dir + "::" + self.wsgi
 
