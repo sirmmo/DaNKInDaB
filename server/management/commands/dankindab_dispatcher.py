@@ -6,6 +6,8 @@ from gevent.pywsgi import WSGIServer
 import inspect
 from server.models import *
 import importlib
+import os
+import sys
 import subprocess
 
 import multiprocessing
@@ -19,43 +21,37 @@ import socket
 from django.core.servers.basehttp import run, WSGIServerException, get_internal_wsgi_application
 from django.utils import autoreload
 
-import time
+		import zmq		
+		import time
 
 import zmq
 
+	
+def dispatcher(environ, setup_response):
+	print environ		
+	context = zmq.Context()
+	subscriber = context.socket (zmq.SUB)
+	subscriber.setsockopt(zmq.SUBSCRIBE, "")
+	publisher = context.socket (zmq.PUB)
+	vh = VirtualHostName.objects.filter(name=environ.get('HTTP_HOST'))
+	if len(vh)>0:
+		publisher.send(
+	else:
+		setup_response('500 ERROR', None)
+		return ["ERROR"]
+    
+    
+class DWSGIServer(WSGIServer):
+    def __init__(self, listener):
+        super(DWSGIServer, self).__init__(('',listener.port), dispatcher)
 
 class Command(BaseCommand):
-	help = 'The DaNKInDaB server'
+    help = 'The DaNKInDaB server'
 
-	def handle(self, *args, **options):
+    def handle(self, *args, **options):
+        self.listeners = []
+        self.handle_daemon(*args, **options)
 
-		context = zmq.Context()
-		publisher = context.socket (zmq.PUB)
-		publisher.bind ("tcp://*:42712")
-		subscriber = context.socket (zmq.SUB)
-		subscriber.setsockopt(zmq.SUBSCRIBE, "")
-		subscriber.connect ("tcp://127.0.0.1:7721")
-
-
-	
-		self.listeners = []
-		#self.handle_daemon(*args, **options)
-		for listener in Listener.objects.all():
-			print listener
-			listener.pid = subprocess.Popen([
-				sys.executable, 
-				'/usr/bin/run_dankindab_dispatcher.py', 
-				listener.ip, 
-				listener.port, 
-				"tcp://localhost:42712",
-				"tcp://*:42713",				
-			], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-			listener.save()
-		while True:
-			pass
-		
-
-'''
     def handle_daemon(self, *args, **options):
 	ports = range(4000,5000)
         i = 0
@@ -76,4 +72,4 @@ class Command(BaseCommand):
         for l in self.listeners:
 	    print l
             l.serve_forever()
-       '''
+        
