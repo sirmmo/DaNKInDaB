@@ -31,9 +31,11 @@ def connected_dispatcher(zmq_sub, zmq_pub):
 	context = zmq.Context()
 	subscriber = context.socket (zmq.SUB)
 	subscriber.connect(zmq_sub)
+	#subscriber.rcvtimeo  = 1000
 	publisher = context.socket (zmq.PUB)
 	publisher.bind(zmq_pub)
 	def dispatcher(environ, setup_response):
+		print "got request"
 		vh = environ.get('HTTP_HOST')
 		e_lite = environ
 		del e_lite['wsgi.input']
@@ -43,9 +45,10 @@ def connected_dispatcher(zmq_sub, zmq_pub):
 		#print environ			
 		print "send request"
 		publisher.send("%s %s" % (vh, json.dumps(e_lite)))
-		print "get response"
-		#ret = subscriber.recv()
-		ret = vh 
+		print "get response"		
+		subscriber.setsockopt (zmq.SUBSCRIBE, "")
+		ret = subscriber.recv()
+		#ret = vh 
 		setup_response("200 OK", [('Content-Type', 'text/plain')])
 		return ret
 	return dispatcher
