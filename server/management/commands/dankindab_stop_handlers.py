@@ -29,27 +29,15 @@ import xmlrpclib
 class Command(BaseCommand):
 	help = 'The DaNKInDaB server'
 
-	
-
 	def handle(self, *args, **options):
-		s = xmlrpclib.ServerProxy('http://localhost:9091')
-		print s.twiddler.getAPIVersion()
-		context = zmq.Context()
-		publisher = context.socket (zmq.PUB)
-		publisher.bind ("tcp://*:42712")
-		subscriber = context.socket (zmq.SUB)
-		subscriber.setsockopt(zmq.SUBSCRIBE, "")
-		subscriber.connect ("tcp://127.0.0.1:7721")
-	
-		s.supervisor.stopProcessGroup('wsgi')
 		#self.handle_daemon(*args, **options)
 		for listener in Listener.objects.all():
+			s = xmlrpclib.ServerProxy('http://localhost:9091')
+	
+			s.supervisor.stopProcessGroup('wsgi')
 			print "s.twiddler.removeProcessFromGroup('wsgi', 'test%s')" % listener.pid
 			s.twiddler.removeProcessFromGroup('wsgi', 'test'+str(listener.pid))
 		
-
-def rand_port ():
-	return choice(range(1025,64000))
 '''
     def handle_daemon(self, *args, **options):
 	ports = range(4000,5000)

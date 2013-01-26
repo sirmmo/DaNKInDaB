@@ -32,34 +32,15 @@ class Command(BaseCommand):
 	
 
 	def handle(self, *args, **options):
-		context = zmq.Context()
-		publisher = context.socket (zmq.PUB)
-		publisher.bind ("tcp://*:42712")
-		subscriber = context.socket (zmq.SUB)
-		subscriber.setsockopt(zmq.SUBSCRIBE, "")
-		subscriber.connect ("tcp://127.0.0.1:7721")
-	
-		self.listeners = []
 		#self.handle_daemon(*args, **options)
-		for listener in Listener.objects.all():
-			s = xmlrpclib.ServerProxy('http://localhost:9091')
-			print listener
-			listener.pid = rand_port()
-			cmd = " ".join([
-				sys.executable, 
-				'/root/www/DaNKInDaB/scripts/run_dankindab_dispatcher.py', 
-				str(listener.ip), 
-				str(listener.port), 
-				"tcp://localhost:42712",
-				"tcp://*:42713",				
-			])
-			s.twiddler.addProgramToGroup('wsgi', 'test'+str(listener.pid),{'command':cmd})
-			
-			listener.save()
+		for server in Server.objects.filter(is_main=True):
+			for listener in Listener.objects.all():
+				s = xmlrpclib.ServerProxy(server.get_url())
 		
-
-def rand_port ():
-	return choice(range(1025,64000))
+				s.supervisor.stopProcessGroup('listeners')
+				print "s.twiddler.removeProcessFromGroup('listeners', 'listener%s')" % listener.pid
+				s.twiddler.removeProcessFromGroup('listeners', 'listener'+str(listener.pid))
+		
 '''
     def handle_daemon(self, *args, **options):
 	ports = range(4000,5000)
