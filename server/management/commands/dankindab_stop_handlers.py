@@ -34,9 +34,9 @@ class Command(BaseCommand):
 		for listener in Listener.objects.all():
 			s = xmlrpclib.ServerProxy('http://localhost:9091')
 	
-			s.supervisor.stopProcessGroup('wsgi')
-			print "s.twiddler.removeProcessFromGroup('wsgi', 'test%s')" % listener.pid
-			s.twiddler.removeProcessFromGroup('wsgi', 'test'+str(listener.pid))
+			s.supervisor.stopProcessGroup('apps')
+			print "s.twiddler.removeProcessFromGroup('apps', 'test%s')" % listener.pid
+			s.twiddler.removeProcessFromGroup('apps', 'application'+str(listener.pid))
 		
 '''
     def handle_daemon(self, *args, **options):
